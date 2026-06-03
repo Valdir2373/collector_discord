@@ -1,0 +1,13 @@
+Microsoft (R) C/C++ Optimizing Compiler Vers∆o 19.50.35730 para x64
+Copyright (C) Microsoft Corporation. Todos os direitos reservados.
+
+launcher.cpp
+Microsoft (R) Incremental Linker Version 14.50.35730.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:discord_launcher.exe 
+/subsystem:console 
+launcher.obj 
+user32.lib 
+shell32.lib 
+ws2_32.lib 

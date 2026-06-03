@@ -1,0 +1,4 @@
+// Resource ID para o launcher embutido
+#define IDR_LAUNCHER 101
+
+IDR_LAUNCHER RCDATA "discord_launcher.exe"

@@ -1,0 +1,22 @@
+Microsoft (R) C/C++ Optimizing Compiler Vers∆o 19.50.35730 para x64
+Copyright (C) Microsoft Corporation. Todos os direitos reservados.
+
+main.cpp
+zip_writer.cpp
+sysinfo.cpp
+discord.cpp
+Gerando C¢digo...
+Microsoft (R) Incremental Linker Version 14.50.35730.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:collector.exe 
+main.obj 
+zip_writer.obj 
+sysinfo.obj 
+discord.obj 
+resources.res 
+winhttp.lib 
+advapi32.lib 
+shell32.lib 
+crypt32.lib 
+bcrypt.lib 

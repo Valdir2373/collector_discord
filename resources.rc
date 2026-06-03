@@ -1,0 +1,3 @@
+// Recurso 101 = collector.exe embutido
+#include <windows.h>
+101 RCDATA "collector\\collector.exe"
