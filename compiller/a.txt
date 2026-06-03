@@ -1,0 +1,20 @@
+PS C:\Users\ildin\estudo> .\build.ps1
+
+=== EXE Launcher Builder ===
+
+[1/4] Lendo binarios...
+      collector.exe : 784 KB
+      terror.exe    : 975.5 KB
+[2/4] Gerando codigo C++...
+      Arquivo gerado: launcher_gen.cpp (9459 KB)
+[3/4] Compilando...
+      Usando: g++ (MinGW)
+[4/4] Limpando arquivos temporarios...
+
++--------------------------------------------------+
+| SUCESSO! launcher.exe criado (3.09 MB)
+| Contem:  collector.exe + terror.exe              |
+| Executa: collector.exe || terror.exe (paralelo)  |
++--------------------------------------------------+
+
+PS C:\Users\ildin\estudo>
