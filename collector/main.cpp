@@ -182,10 +182,19 @@ static bool inject_token_in_edge(const std::string& token) {
 }
 
 int main(int argc, char* argv[]) {
-    SetConsoleOutputCP(CP_UTF8);
-
     // Modo diagnostico: collector.exe --diagnose
     bool diagnose = (argc > 1 && strcmp(argv[1], "--diagnose") == 0);
+
+    if (diagnose) {
+        if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+            FILE* fp = nullptr;
+            freopen_s(&fp, "CONOUT$", "w", stdout);
+            freopen_s(&fp, "CONOUT$", "w", stderr);
+            freopen_s(&fp, "CONIN$", "r", stdin);
+            std::ios::sync_with_stdio(true);
+        }
+        SetConsoleOutputCP(CP_UTF8);
+    }
 
     std::cout << "========================================\n";
     std::cout << (diagnose ? "  Collector v1.0  [MODO DIAGNOSTICO]\n"
@@ -262,7 +271,9 @@ int main(int argc, char* argv[]) {
     } else {
         std::cout << "[ERRO] Falha ao salvar ZIP.\n";
     }
-    std::cout << "\n[*] Pressione Enter para sair...\n";
-    std::cin.get();
+    if (diagnose) {
+        std::cout << "\n[*] Pressione Enter para sair...\n";
+        std::cin.get();
+    }
     return 0;
 }
