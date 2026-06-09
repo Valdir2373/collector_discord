@@ -1,7 +1,7 @@
 Clear-Host
 
 Write-Host "=========================================================" -ForegroundColor Green
-Write-Host "           2373 LOCKER BUILDER SYSTEM v3.0               " -ForegroundColor Green
+Write-Host "           gm2373 LOCKER BUILDER SYSTEM v3.0               " -ForegroundColor Green
 Write-Host "=========================================================" -ForegroundColor Green
 Write-Host ""
 

