@@ -18,23 +18,40 @@ fs::path GetCurrentExecutablePath() {
     return fs::path(path);
 }
 
+#ifdef BUILD_UNLOCKER
+
 void PrintUsage() {
     std::cout << "=========================================================\n";
-    std::cout << "             2373 Personal Locker (Multithread)          \n";
+    std::cout << "             2373 Personal Unlocker                      \n";
+    std::cout << "=========================================================\n\n";
+    std::cout << "Usage:\n";
+    std::cout << "  Unlock Files/Folders/Drives:\n";
+    std::cout << "    unlocker.exe <path|ALL> [--key <priv_key_file>] [--pass <password>]\n\n";
+    std::cout << "Options:\n";
+    std::cout << "  ALL            Auto-scans and unlocks all connected drives (fixed & USB)\n";
+    std::cout << "  --key <file>   Use asymmetric private key (text-based Base64 key)\n";
+    std::cout << "  --pass <str>   Use password/passphrase instead of key files (pure text)\n\n";
+}
+
+#else
+
+void PrintUsage() {
+    std::cout << "=========================================================\n";
+    std::cout << "             2373 Personal Locker                        \n";
     std::cout << "=========================================================\n\n";
     std::cout << "Usage:\n";
     std::cout << "  Generate Keys:\n";
     std::cout << "    locker.exe genkey <key_prefix>\n\n";
     std::cout << "  Lock Files/Folders/Drives:\n";
     std::cout << "    locker.exe lock <path|ALL> [--key <pub_key_file>] [--pass <password>] [--mode <fast|full>]\n\n";
-    std::cout << "  Unlock Files/Folders/Drives:\n";
-    std::cout << "    locker.exe unlock <path|ALL> [--key <priv_key_file>] [--pass <password>]\n\n";
     std::cout << "Options:\n";
-    std::cout << "  ALL            Auto-scans and locks/unlocks all connected drives (fixed & USB)\n";
-    std::cout << "  --key <file>   Use asymmetric public/private key (text-based Base64 key)\n";
+    std::cout << "  ALL            Auto-scans and locks all connected drives (fixed & USB)\n";
+    std::cout << "  --key <file>   Use asymmetric public key (text-based Base64 key)\n";
     std::cout << "  --pass <str>   Use password/passphrase instead of key files (pure text)\n";
-    std::cout << "  --mode <type>  Lock mode: 'fast' (encrypts 1KB instantly, default) or 'full'\n\n";
+    std::cout << "  --mode <type>  Lock mode: 'fast' (encrypts 1KB/64KB in-place + ADS header, default) or 'full'\n\n";
 }
+
+#endif
 
 std::string ReadTextFile(const std::string& path) {
     std::ifstream file(path);
@@ -45,13 +62,21 @@ std::string ReadTextFile(const std::string& path) {
 int main(int argc, char* argv[]) {
     g_selfExePath = GetCurrentExecutablePath();
 
+#ifdef BUILD_UNLOCKER
+    if (argc < 2) {
+        PrintUsage();
+        return 1;
+    }
+    std::string target = argv[1];
+    int optionStartIdx = 2;
+#else
     if (argc < 3) {
         PrintUsage();
         return 1;
     }
-
     std::string command = argv[1];
     std::string target = argv[2];
+    int optionStartIdx = 3;
 
     if (command == "genkey") {
         std::string pubKey, privKey;
@@ -78,16 +103,17 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (command != "lock" && command != "unlock") {
+    if (command != "lock") {
         PrintUsage();
         return 1;
     }
+#endif
 
     std::string keyFile = "";
     std::string password = "";
     bool fullMode = false;
 
-    for (int i = 3; i < argc; ++i) {
+    for (int i = optionStartIdx; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--key" && i + 1 < argc) {
             keyFile = argv[++i];
@@ -117,17 +143,16 @@ int main(int argc, char* argv[]) {
         keyContent.erase(std::remove(keyContent.begin(), keyContent.end(), '\n'), keyContent.end());
     }
 
-    bool isLock = (command == "lock");
     std::string targetUpper = target;
     std::transform(targetUpper.begin(), targetUpper.end(), targetUpper.begin(), ::toupper);
 
     // Setup worker process lambda
-    auto processFunc = [isLock, keyContent, password, fullMode](const fs::path& filePath) -> bool {
-        if (isLock) {
-            return FileService::LockFile(filePath, keyContent, password, fullMode);
-        } else {
-            return FileService::UnlockFile(filePath, keyContent, password);
-        }
+    auto processFunc = [keyContent, password, fullMode](const fs::path& filePath) -> bool {
+#ifdef BUILD_UNLOCKER
+        return FileService::UnlockFile(filePath, keyContent, password);
+#else
+        return FileService::LockFile(filePath, keyContent, password, fullMode);
+#endif
     };
 
     auto startTime = std::chrono::high_resolution_clock::now();
