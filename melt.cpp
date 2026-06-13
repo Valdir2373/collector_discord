@@ -46,27 +46,6 @@ static void ApplyBottomErosion(const DWORD* orig, DWORD* dst,
     }
 }
 
-// ─── GLITCH: bandas horizontais deslocadas (fragmentação na borda) ─────────────
-static void ApplyBandGlitch(const DWORD* src, DWORD* dst) {
-    DWORD seed = GetTickCount() / 150;
-    std::mt19937 bRng(seed);
-    std::uniform_int_distribution<int> bh_dist(2, 28);
-    std::uniform_int_distribution<int> disp_dist(-140, 140);
-    std::uniform_int_distribution<int> prob_dist(0, 3);
-
-    memcpy(dst, src, (size_t)SW * SH * sizeof(DWORD));
-    int y = 0;
-    while(y < SH) {
-        int bh   = bh_dist(bRng);
-        int disp = (prob_dist(bRng) == 0) ? disp_dist(bRng) : 0;
-        for(int by = y; by < y + bh && by < SH; by++)
-            for(int x = 0; x < SW; x++) {
-                int sx = x + disp;
-                dst[by*SW+x] = (sx>=0&&sx<SW) ? src[by*SW+sx] : 0xFF000000;
-            }
-        y += bh;
-    }
-}
 
 void RunMelt(HINSTANCE hInst) {
     BITMAPINFO bmi = {};
@@ -92,11 +71,6 @@ void RunMelt(HINSTANCE hInst) {
     HBITMAP hErBmp   = CreateDIBSection(hErDC,&bmi,DIB_RGB_COLORS,&erPixels,nullptr,0);
     SelectObject(hErDC,hErBmp);
 
-    // final = erosion + glitch
-    void*   finPixels = nullptr;
-    HDC     hFinDC    = CreateCompatibleDC(nullptr);
-    HBITMAP hFinBmp   = CreateDIBSection(hFinDC,&bmi,DIB_RGB_COLORS,&finPixels,nullptr,0);
-    SelectObject(hFinDC,hFinBmp);
 
     // Janela fullscreen topmost
     const wchar_t MELT_CLS[] = L"MeltCls";
@@ -116,7 +90,6 @@ void RunMelt(HINSTANCE hInst) {
 
     const DWORD* orig = (const DWORD*)origPixels;
     DWORD*       er   = (DWORD*)erPixels;
-    DWORD*       fin  = (DWORD*)finPixels;
 
     MSG msg = {};
     while(g_running) {
@@ -126,21 +99,17 @@ void RunMelt(HINSTANCE hInst) {
         }
         if(!g_running) break;
 
-        // 1. Preto sobe por baixo de cada coluna → perfil de montanhas
+        // Preto sobe por baixo de cada coluna → perfil de montanhas (sem glitch)
         ApplyBottomErosion(orig, er, cols);
 
-        // 2. Glitch de bandas por cima → fragmentação na borda
-        ApplyBandGlitch(er, fin);
-
-        // 3. Exibe
+        // Exibe direto — sem glitch
         HDC hWDC = GetDC(g_hMeltWnd);
-        BitBlt(hWDC,0,0,SW,SH,hFinDC,0,0,SRCCOPY);
+        BitBlt(hWDC,0,0,SW,SH,hErDC,0,0,SRCCOPY);
         ReleaseDC(g_hMeltWnd,hWDC);
-        SetWindowPos(g_hMeltWnd,HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+        // Melt NÃO reasserta TOPMOST — deixa o QR popup sempre acima
         Sleep(32);
     }
 
-    DeleteObject(hFinBmp); DeleteDC(hFinDC);
     DeleteObject(hErBmp);  DeleteDC(hErDC);
     DeleteObject(hOrigBmp); DeleteDC(hOrigDC);
     DestroyWindow(g_hMeltWnd);

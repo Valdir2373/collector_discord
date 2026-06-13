@@ -22,5 +22,7 @@ const wchar_t* MSGS[] = {
     L"\u274C   SENHA DETECTADA \u2014 ENVIANDO...   \u274C",
     L"\u26A0   VOC\u00CA N\u00C3O PODE ESCAPAR   \u26A0",
 };
-const int  MSG_COUNT    = 7;
-const bool BEEP_ENABLED = true 	;
+const int  MSG_COUNT             = 7;
+const bool BEEP_ENABLED          = true;
+const bool SHUTDOWN_ENABLED      = true;
+const int  SHUTDOWN_DELAY_SECONDS = 120; // 2 minutos até reiniciar

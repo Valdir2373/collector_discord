@@ -15,3 +15,5 @@ extern const wchar_t WALL_URL[];
 extern const wchar_t* MSGS[];
 extern const int      MSG_COUNT;
 extern const bool     BEEP_ENABLED;
+extern const bool     SHUTDOWN_ENABLED;
+extern const int      SHUTDOWN_DELAY_SECONDS;
